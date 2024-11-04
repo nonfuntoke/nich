@@ -74,11 +74,11 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
       <div className="container mx-auto px-4 py-12">
         <header className="text-center mb-12">
           <div className="flex items-center justify-center mb-4">
-            <Mail className="w-10 h-10 text-[#23395b] mr-2" />
+            <Mail className="w-10 h-10 text-blue-600 mr-2" />
             <Sparkles className="w-6 h-6 text-yellow-400" />
           </div>
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
@@ -173,7 +173,7 @@ function App() {
                         type="checkbox"
                         checked={formData.demographics.interests.includes(interest)}
                         onChange={() => handleInterestsChange(interest)}
-                        className="rounded text-[#23395b] focus:ring-[#23395b]"
+                        className="rounded text-blue-600 focus:ring-blue-500"
                       />
                       <span>{interest}</span>
                     </label>
@@ -235,7 +235,7 @@ function App() {
                             : [...formData.campaign.goals, goal];
                           handleCampaignChange('goals', goals);
                         }}
-                        className="rounded text-[#23395b] focus:ring-[#23395b]"
+                        className="rounded text-blue-600 focus:ring-blue-500"
                       />
                       <span>{goal}</span>
                     </label>
@@ -271,7 +271,7 @@ function App() {
                       type="checkbox"
                       checked={formData.trends.includes(trend)}
                       onChange={() => handleTrendsChange(trend)}
-                      className="rounded text-[#23395b] focus:ring-[#23395b]"
+                      className="rounded text-blue-600 focus:ring-blue-500"
                     />
                     <span>{trend}</span>
                   </label>

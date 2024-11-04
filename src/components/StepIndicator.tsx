@@ -15,9 +15,9 @@ export function StepIndicator({ currentStep, totalSteps }: StepIndicatorProps) {
             <div
               className={`w-8 h-8 rounded-full flex items-center justify-center ${
                 index < currentStep
-                  ? 'bg-[#23395b] text-white'
+                  ? 'bg-blue-600 text-white'
                   : index === currentStep
-                  ? 'bg-white border-2 border-[#23395b] text-[#23395b]'
+                  ? 'bg-blue-100 border-2 border-blue-600 text-blue-600'
                   : 'bg-gray-100 text-gray-400'
               }`}
             >
@@ -30,7 +30,7 @@ export function StepIndicator({ currentStep, totalSteps }: StepIndicatorProps) {
             {index < totalSteps - 1 && (
               <div
                 className={`h-0.5 w-12 ${
-                  index < currentStep ? 'bg-[#23395b]' : 'bg-gray-200'
+                  index < currentStep ? 'bg-blue-600' : 'bg-gray-200'
                 }`}
               />
             )}

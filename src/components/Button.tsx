@@ -12,10 +12,10 @@ export function Button({
   className = '',
   ...props
 }: ButtonProps) {
-  const baseStyles = 'px-6 py-3 rounded-xl font-semibold transition-all duration-200';
+  const baseStyles = 'px-6 py-3 rounded-lg font-semibold transition-all duration-200';
   const variants = {
-    primary: 'bg-[#23395b] text-white hover:bg-white hover:text-[#23395b] hover:border-2 hover:border-[#23395b]',
-    secondary: 'border-2 border-[#23395b] text-[#23395b] hover:bg-[#23395b] hover:text-white',
+    primary: 'bg-blue-600 text-white hover:bg-blue-700',
+    secondary: 'bg-gray-100 text-gray-700 hover:bg-gray-200',
   };
 
   return (

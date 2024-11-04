@@ -2,8 +2,8 @@
 /**
  * Plugin Name: Email Marketing Niches AI
  * Description: AI-powered email marketing niche discovery and campaign planning
- * Version: 1.0.2
- * Author: Samid
+ * Version: 1.0.0
+ * Author: Your Name
  */
 
 if (!defined('ABSPATH')) {
@@ -11,23 +11,23 @@ if (!defined('ABSPATH')) {
 }
 
 // Plugin constants
-define('EMN_VERSION', time()); // Use timestamp for development
+define('EMN_VERSION', '1.0.0');
 define('EMN_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('EMN_PLUGIN_URL', plugin_dir_url(__FILE__));
 
 // Initialize plugin
 function emn_init() {
     add_action('admin_menu', 'emn_admin_menu');
-    add_action('wp_enqueue_scripts', 'emn_frontend_scripts');
     add_action('admin_enqueue_scripts', 'emn_admin_scripts');
+    add_action('wp_enqueue_scripts', 'emn_frontend_scripts');
     add_action('wp_ajax_emn_verify_api', 'emn_verify_api');
     add_action('wp_ajax_emn_get_recommendations', 'emn_get_recommendations');
     add_action('wp_ajax_nopriv_emn_get_recommendations', 'emn_get_recommendations');
-    add_shortcode('email_marketing_niches', 'emn_shortcode');
+    add_shortcode('email_marketing_niches', 'emn_frontend_shortcode');
 }
 add_action('plugins_loaded', 'emn_init');
 
-// Add admin menu
+// Register admin menu
 function emn_admin_menu() {
     add_menu_page(
         'Email Marketing Niches',
@@ -48,57 +48,30 @@ function emn_admin_menu() {
     );
 }
 
-// Frontend scripts and styles
+// Enqueue frontend scripts and styles
 function emn_frontend_scripts() {
-    global $post;
-    if (!is_a($post, 'WP_Post') || !has_shortcode($post->post_content, 'email_marketing_niches')) {
-        return;
-    }
-
-    // Deregister WordPress's jQuery to avoid conflicts
-    wp_deregister_script('jquery');
-    wp_deregister_script('wp-embed');
-
-    // Enqueue React and ReactDOM from CDN
-    wp_enqueue_script(
-        'react',
-        'https://unpkg.com/react@18/umd/react.production.min.js',
-        [],
-        '18.0.0',
-        true
-    );
-
-    wp_enqueue_script(
-        'react-dom',
-        'https://unpkg.com/react-dom@18/umd/react-dom.production.min.js',
-        ['react'],
-        '18.0.0',
-        true
-    );
-
-    // Enqueue our app's assets
     wp_enqueue_style(
         'emn-frontend-styles',
-        EMN_PLUGIN_URL . 'dist/assets/index-CjLnF1dk.css',
+        EMN_PLUGIN_URL . 'assets/css/frontend.css',
         [],
         EMN_VERSION
     );
 
     wp_enqueue_script(
         'emn-frontend-script',
-        EMN_PLUGIN_URL . 'dist/assets/index-D5YLffpQ.js',
-        ['react', 'react-dom'],
+        EMN_PLUGIN_URL . 'assets/js/frontend.js',
+        ['jquery'],
         EMN_VERSION,
         true
     );
 
-    wp_localize_script('emn-frontend-script', 'emnConfig', array(
+    wp_localize_script('emn-frontend-script', 'emnAjax', [
         'ajaxurl' => admin_url('admin-ajax.php'),
         'nonce' => wp_create_nonce('emn_nonce')
-    ));
+    ]);
 }
 
-// Admin scripts and styles
+// Enqueue admin scripts and styles
 function emn_admin_scripts($hook) {
     if (!in_array($hook, ['toplevel_page_email-marketing-niches', 'email-marketing_page_email-marketing-settings'])) {
         return;
@@ -119,18 +92,20 @@ function emn_admin_scripts($hook) {
         true
     );
 
-    wp_localize_script('emn-admin-script', 'emnAjax', array(
+    wp_localize_script('emn-admin-script', 'emnAjax', [
         'ajaxurl' => admin_url('admin-ajax.php'),
         'nonce' => wp_create_nonce('emn_nonce')
-    ));
+    ]);
 }
 
-// Shortcode to embed the React app
-function emn_shortcode() {
+// Frontend shortcode callback
+function emn_frontend_shortcode() {
+    $api_key = get_option('emn_gemini_api_key');
+    if (!$api_key) {
+        return '<div class="emn-error">Service temporarily unavailable. Please try again later.</div>';
+    }
     ob_start();
-    ?>
-    <div id="email-marketing-niches-root" class="emn-root"></div>
-    <?php
+    require_once EMN_PLUGIN_DIR . 'templates/frontend-form.php';
     return ob_get_clean();
 }
 
@@ -157,14 +132,19 @@ function emn_settings_page() {
 function emn_verify_api() {
     check_ajax_referer('emn_nonce', 'nonce');
     
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error('Unauthorized access');
+    }
+    
     $api_key = get_option('emn_gemini_api_key');
     if (!$api_key) {
         wp_send_json_error('API key not configured');
     }
 
-    $response = wp_remote_get('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro', [
+    $response = wp_remote_get('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro/generateText', [
         'headers' => [
-            'Authorization' => 'Bearer ' . $api_key
+            'Authorization' => 'Bearer ' . $api_key,
+            'Content-Type' => 'application/json'
         ]
     ]);
 
@@ -173,32 +153,38 @@ function emn_verify_api() {
     }
 
     $body = json_decode(wp_remote_retrieve_body($response), true);
-    if (isset($body['error'])) {
-        wp_send_json_error($body['error']['message']);
-    }
-
-    wp_send_json_success('API key verified successfully');
+    wp_send_json_success($body);
 }
 
 // AJAX handler for getting AI recommendations
 function emn_get_recommendations() {
     check_ajax_referer('emn_nonce', 'nonce');
     
-    if (!isset($_POST['data'])) {
-        wp_send_json_error('No data provided');
-    }
-
     $api_key = get_option('emn_gemini_api_key');
     if (!$api_key) {
-        wp_send_json_error('API key not configured');
+        wp_send_json_error('Service temporarily unavailable');
     }
 
     $data = json_decode(stripslashes($_POST['data']), true);
-    
     if (!$data) {
         wp_send_json_error('Invalid data format');
     }
-
+    
+    // Sanitize inputs
+    $sanitized_data = [
+        'industry' => sanitize_text_field($data['industry']),
+        'demographics' => [
+            'ageRange' => sanitize_text_field($data['demographics']['ageRange']),
+            'location' => sanitize_text_field($data['demographics']['location']),
+            'interests' => array_map('sanitize_text_field', $data['demographics']['interests'])
+        ],
+        'campaign' => [
+            'contentFocus' => sanitize_text_field($data['campaign']['contentFocus']),
+            'goals' => array_map('sanitize_text_field', $data['campaign']['goals'])
+        ],
+        'trends' => array_map('sanitize_text_field', $data['trends'])
+    ];
+    
     $prompt = sprintf(
         'Based on the following user profile:
         - Industry: %s
@@ -212,13 +198,13 @@ function emn_get_recommendations() {
         2. Recommended audience segmentation
         3. Specific content ideas, email subject lines, and messaging styles
         4. Analysis of competitors and differentiation strategies',
-        sanitize_text_field($data['industry']),
-        sanitize_text_field($data['demographics']['ageRange']),
-        sanitize_text_field($data['demographics']['location']),
-        implode(', ', array_map('sanitize_text_field', $data['demographics']['interests'])),
-        sanitize_text_field($data['campaign']['contentFocus']),
-        implode(', ', array_map('sanitize_text_field', $data['campaign']['goals'])),
-        implode(', ', array_map('sanitize_text_field', $data['trends']))
+        $sanitized_data['industry'],
+        $sanitized_data['demographics']['ageRange'],
+        $sanitized_data['demographics']['location'],
+        implode(', ', $sanitized_data['demographics']['interests']),
+        $sanitized_data['campaign']['contentFocus'],
+        implode(', ', $sanitized_data['campaign']['goals']),
+        implode(', ', $sanitized_data['trends'])
     );
 
     $response = wp_remote_post('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro/generateText', [
@@ -238,10 +224,10 @@ function emn_get_recommendations() {
     }
 
     $body = json_decode(wp_remote_retrieve_body($response), true);
-    if (isset($body['error'])) {
-        wp_send_json_error($body['error']['message']);
+    
+    if (empty($body) || isset($body['error'])) {
+        wp_send_json_error('Failed to generate recommendations');
     }
-
-    $recommendations = isset($body['candidates'][0]['output']) ? $body['candidates'][0]['output'] : '';
-    wp_send_json_success(nl2br(esc_html($recommendations)));
+    
+    wp_send_json_success($body);
 }
