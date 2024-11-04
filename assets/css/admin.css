@@ -1,0 +1,102 @@
+.emn-admin {
+    max-width: 800px;
+    margin: 20px auto;
+}
+
+.emn-wizard {
+    background: #fff;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+}
+
+.emn-step {
+    display: none;
+}
+
+.emn-step.active {
+    display: block;
+}
+
+.emn-input {
+    width: 100%;
+    margin-bottom: 15px;
+    padding: 8px;
+}
+
+.emn-checkbox-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+    margin: 15px 0;
+}
+
+.emn-checkbox-grid label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.emn-navigation {
+    margin-top: 20px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.emn-results {
+    margin-top: 30px;
+    padding: 20px;
+    border-top: 1px solid #ddd;
+}
+
+.emn-loading {
+    text-align: center;
+    padding: 20px;
+}
+
+.emn-recommendations {
+    margin-top: 20px;
+}
+
+.emn-step-indicator {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 30px;
+}
+
+.emn-step-indicator .step {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #f0f0f1;
+    color: #50575e;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 15px;
+    position: relative;
+}
+
+.emn-step-indicator .step.active {
+    background: #2271b1;
+    color: #fff;
+}
+
+.emn-step-indicator .step.completed {
+    background: #00a32a;
+    color: #fff;
+}
+
+.emn-step-indicator .step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    right: -30px;
+    top: 50%;
+    width: 30px;
+    height: 2px;
+    background: #f0f0f1;
+}
