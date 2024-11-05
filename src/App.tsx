@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { Sparkles, Mail } from 'lucide-react';
+import { Mail, Sparkles } from 'lucide-react';
 import { StepIndicator } from './components/StepIndicator';
 import { FormStep } from './components/FormStep';
 import { Button } from './components/Button';
+import { RecommendationsSection } from './components/RecommendationsSection';
 import { FormData, initialFormData } from './types/form';
 import { generateRecommendations, APIError } from './services/api';
 
-function App() {
+export function App() {
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [isLoading, setIsLoading] = useState(false);
@@ -97,10 +98,10 @@ function App() {
       <div className="container mx-auto px-4 py-12">
         <header className="text-center mb-12">
           <div className="flex items-center justify-center mb-4">
-            <Mail className="w-10 h-10 text-blue-600 mr-2" />
+            <Mail className="w-10 h-10 text-[#23395B] mr-2" />
             <Sparkles className="w-6 h-6 text-yellow-400" />
           </div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+          <h1 className="text-4xl font-bold text-[#23395B] mb-4">
             Discover Profitable Email Marketing Niches
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
@@ -189,7 +190,7 @@ function App() {
                         type="checkbox"
                         checked={formData.demographics.interests.includes(interest)}
                         onChange={() => handleInterestsChange(interest)}
-                        className="rounded text-blue-600 focus:ring-blue-500"
+                        className="rounded text-[#23395B] focus:ring-[#23395B]"
                       />
                       <span>{interest}</span>
                     </label>
@@ -251,7 +252,7 @@ function App() {
                             : [...formData.campaign.goals, goal];
                           handleCampaignChange('goals', goals);
                         }}
-                        className="rounded text-blue-600 focus:ring-blue-500"
+                        className="rounded text-[#23395B] focus:ring-[#23395B]"
                       />
                       <span>{goal}</span>
                     </label>
@@ -287,7 +288,7 @@ function App() {
                       type="checkbox"
                       checked={formData.trends.includes(trend)}
                       onChange={() => handleTrendsChange(trend)}
-                      className="rounded text-blue-600 focus:ring-blue-500"
+                      className="rounded text-[#23395B] focus:ring-[#23395B]"
                     />
                     <span>{trend}</span>
                   </label>
@@ -314,14 +315,7 @@ function App() {
               )}
 
               {recommendations && (
-                <div className="mt-8 p-6 bg-white rounded-lg shadow-lg">
-                  <h3 className="text-xl font-semibold mb-4">Your Personalized Recommendations</h3>
-                  <div className="prose max-w-none">
-                    {recommendations.split('\n').map((line, index) => (
-                      <p key={index}>{line}</p>
-                    ))}
-                  </div>
-                </div>
+                <RecommendationsSection recommendations={recommendations} />
               )}
             </div>
           </FormStep>

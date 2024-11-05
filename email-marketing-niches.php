@@ -141,12 +141,7 @@ function emn_verify_api() {
         wp_send_json_error('API key not configured');
     }
 
-    $response = wp_remote_get('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro/generateText', [
-        'headers' => [
-            'Authorization' => 'Bearer ' . $api_key,
-            'Content-Type' => 'application/json'
-        ]
-    ]);
+    $response = wp_remote_get("https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={$api_key}");
 
     if (is_wp_error($response)) {
         wp_send_json_error($response->get_error_message());
@@ -184,7 +179,7 @@ function emn_get_recommendations() {
         ],
         'trends' => array_map('sanitize_text_field', $data['trends'])
     ];
-    
+
     $prompt = sprintf(
         'Based on the following user profile:
         - Industry: %s
@@ -207,27 +202,49 @@ function emn_get_recommendations() {
         implode(', ', $sanitized_data['trends'])
     );
 
-    $response = wp_remote_post('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro/generateText', [
-        'headers' => [
-            'Authorization' => 'Bearer ' . $api_key,
-            'Content-Type' => 'application/json'
+    $request_body = [
+        'contents' => [
+            [
+                'parts' => [
+                    [
+                        'text' => $prompt
+                    ]
+                ]
+            ]
         ],
-        'body' => json_encode([
-            'prompt' => ['text' => $prompt],
+        'generationConfig' => [
             'temperature' => 0.7,
-            'candidate_count' => 1
-        ])
-    ]);
+            'topK' => 40,
+            'topP' => 0.95,
+            'maxOutputTokens' => 1024,
+        ]
+    ];
+
+    $response = wp_remote_post(
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={$api_key}",
+        [
+            'headers' => [
+                'Content-Type' => 'application/json',
+            ],
+            'body' => json_encode($request_body),
+            'timeout' => 30,
+        ]
+    );
 
     if (is_wp_error($response)) {
-        wp_send_json_error($response->get_error_message());
+        wp_send_json_error('Failed to connect to the API: ' . $response->get_error_message());
+    }
+
+    $http_code = wp_remote_retrieve_response_code($response);
+    if ($http_code !== 200) {
+        wp_send_json_error('API request failed with status code: ' . $http_code);
     }
 
     $body = json_decode(wp_remote_retrieve_body($response), true);
     
-    if (empty($body) || isset($body['error'])) {
-        wp_send_json_error('Failed to generate recommendations');
+    if (empty($body) || !isset($body['candidates'][0]['content']['parts'][0]['text'])) {
+        wp_send_json_error('Invalid response format from API');
     }
     
-    wp_send_json_success($body);
+    wp_send_json_success($body['candidates'][0]['content']['parts'][0]['text']);
 }

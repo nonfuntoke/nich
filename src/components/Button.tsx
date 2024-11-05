@@ -12,10 +12,10 @@ export function Button({
   className = '',
   ...props
 }: ButtonProps) {
-  const baseStyles = 'px-6 py-3 rounded-lg font-semibold transition-all duration-200';
+  const baseStyles = 'px-4 py-2 rounded-xl transition-all duration-300';
   const variants = {
-    primary: 'bg-blue-600 text-white hover:bg-blue-700',
-    secondary: 'bg-gray-100 text-gray-700 hover:bg-gray-200',
+    primary: 'bg-[#23395B] text-white hover:bg-transparent hover:border-2 hover:border-[#23395B] hover:text-[#23395B]',
+    secondary: 'bg-gray-100 text-gray-700 hover:bg-gray-200 border-2 border-transparent hover:border-gray-300',
   };
 
   return (
@@ -28,7 +28,7 @@ export function Button({
     >
       {isLoading ? (
         <div className="flex items-center justify-center">
-          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+          <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
           Loading...
         </div>
       ) : (
