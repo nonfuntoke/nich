@@ -4,10 +4,14 @@ import { StepIndicator } from './components/StepIndicator';
 import { FormStep } from './components/FormStep';
 import { Button } from './components/Button';
 import { FormData, initialFormData } from './types/form';
+import { generateRecommendations, APIError } from './services/api';
 
 function App() {
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState<FormData>(initialFormData);
+  const [isLoading, setIsLoading] = useState(false);
+  const [recommendations, setRecommendations] = useState<string>('');
+  const [error, setError] = useState<string>('');
 
   const handleIndustryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setFormData({ ...formData, industry: e.target.value });
@@ -73,6 +77,21 @@ function App() {
     }
   };
 
+  const handleSubmit = async () => {
+    setIsLoading(true);
+    setError('');
+    setRecommendations('');
+    
+    try {
+      const result = await generateRecommendations(formData);
+      setRecommendations(result);
+    } catch (err) {
+      setError(err instanceof APIError ? err.message : 'An unexpected error occurred');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
       <div className="container mx-auto px-4 py-12">
@@ -111,10 +130,7 @@ function App() {
                 <option value="ecommerce">E-commerce</option>
               </select>
               <div className="flex justify-end mt-6">
-                <Button
-                  onClick={handleNext}
-                  disabled={!isStepValid()}
-                >
+                <Button onClick={handleNext} disabled={!isStepValid()}>
                   Next Step
                 </Button>
               </div>
@@ -283,12 +299,30 @@ function App() {
                   Back
                 </Button>
                 <Button
-                  onClick={() => console.log('Form submitted:', formData)}
+                  onClick={handleSubmit}
                   disabled={!isStepValid()}
+                  isLoading={isLoading}
                 >
                   Generate Recommendations
                 </Button>
               </div>
+
+              {error && (
+                <div className="mt-4 p-4 bg-red-50 text-red-700 rounded-lg">
+                  {error}
+                </div>
+              )}
+
+              {recommendations && (
+                <div className="mt-8 p-6 bg-white rounded-lg shadow-lg">
+                  <h3 className="text-xl font-semibold mb-4">Your Personalized Recommendations</h3>
+                  <div className="prose max-w-none">
+                    {recommendations.split('\n').map((line, index) => (
+                      <p key={index}>{line}</p>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </FormStep>
         )}
